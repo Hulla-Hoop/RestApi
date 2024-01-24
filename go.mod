@@ -4,7 +4,6 @@ go 1.21.0
 
 require (
 	github.com/google/go-cmp v0.6.0
-	github.com/hulla-hoop/testSobes v0.0.0-20240117215529-4d992dc75605
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/lib/pq v1.10.9

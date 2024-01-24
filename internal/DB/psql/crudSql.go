@@ -3,6 +3,7 @@ package psql
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/hulla-hoop/restapi/internal/modeldb"
 )
@@ -36,22 +37,40 @@ func (db *sqlPostgres) Create(user *modeldb.User) (*int, error) {
 }
 
 func (db *sqlPostgres) Update(user *modeldb.User, id int) error {
-	result, err := db.dB.Exec(
-		"UPDATE users "+
-			"SET created_at = $1,updated_at=$2,name=$3,surname=$4,patronymic=$5,age=$6,gender=$7,nationality=$8 "+
-			"WHERE id=$9 ",
-		user.CreatedAt,
+	var patronymic, gender, nationality, age string
+
+	user.UpdatedAt = time.Now()
+	if user.Patronymic == "" {
+		patronymic = " "
+	} else {
+		patronymic = fmt.Sprintf("patronymic = '%s',", user.Patronymic)
+	}
+	if user.Gender == "" {
+		gender = " "
+	} else {
+		gender = fmt.Sprintf("gender = '%s',", user.Gender)
+	}
+	if user.Nationality == "" {
+		nationality = " "
+	} else {
+		nationality = fmt.Sprintf("nationality = '%s',", user.Nationality)
+	}
+	if user.Age == 0 {
+		age = " "
+	} else {
+		age = fmt.Sprintf("age = '%d',", user.Age)
+	}
+
+	update := fmt.Sprintf("UPDATE users SET updated_at=$1,name=$2, %s %s %s %s surname=$3  WHERE id=$4 ", patronymic, age, gender, nationality)
+	_, err := db.dB.Exec(
+		update,
 		user.UpdatedAt,
 		user.Name,
-		user.Surname,
-		user.Patronymic,
-		user.Age,
-		user.Gender,
-		user.Nationality, id)
+		user.Surname, id)
 	if err != nil {
 		return err
 	}
-	fmt.Println(result.RowsAffected())
+
 	return nil
 }
 
@@ -95,12 +114,7 @@ func (db *sqlPostgres) InsertAll() ([]modeldb.User, error) {
 
 func (db *sqlPostgres) InsertPage(page uint, limit int) (modeldb.Users, error) {
 
-	var cashPage uint = 1
-	if page == 1 {
-		cashPage = 0
-	} else {
-		cashPage = page*uint(limit) - 1
-	}
+	cashPage := page*uint(limit) - 1
 
 	rows, err := db.dB.Query(
 		"SELECT id,name,surname,patronymic,age,gender,nationality "+

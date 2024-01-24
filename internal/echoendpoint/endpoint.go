@@ -27,7 +27,6 @@ func New(db DB.DB, inflogger *log.Logger, errLogger *log.Logger, service *servic
 		service:   service}
 }
 
-// TODO: переделать статусы ошибок
 func (e *Endpoint) Insert(c echo.Context) error {
 	u := new(modeldb.User)
 	err := c.Bind(u)
@@ -38,7 +37,7 @@ func (e *Endpoint) Insert(c echo.Context) error {
 	err = e.service.Encriment(u)
 	if err != nil {
 		e.errLogger.Println(err)
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	id, err := e.Db.Create(u)
@@ -74,7 +73,7 @@ func (e *Endpoint) Update(c echo.Context) error {
 	err = e.service.CheckErr(u)
 	if err != nil {
 		e.errLogger.Println(err)
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 	id, _ := strconv.Atoi(c.Param("id"))
 	err = e.Db.Update(u, id)
@@ -82,10 +81,8 @@ func (e *Endpoint) Update(c echo.Context) error {
 		e.errLogger.Println(err)
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, u)
+	return c.JSON(http.StatusOK, "Пользователь изменен")
 }
-
-//сортировка без Middleware
 
 func (e *Endpoint) Sort(c echo.Context) error {
 	users := []modeldb.User{}
@@ -95,8 +92,6 @@ func (e *Endpoint) Sort(c echo.Context) error {
 		e.errLogger.Println(err)
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	/* testString := c.QueryParam("sort")
-	e.inflogger.Println(testString) */
 
 	field := valueStr["sort"]
 	e.inflogger.Println(field[0])
@@ -131,7 +126,7 @@ func (e *Endpoint) UserPagination(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	u, err := e.Db.InsertPage(uint(page), limit)
+	u, err := e.Db.InsertPage(uint(page)-1, limit)
 	if err != nil {
 		e.errLogger.Println(err)
 		return c.JSON(http.StatusInternalServerError, err.Error())

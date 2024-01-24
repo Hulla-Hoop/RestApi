@@ -33,19 +33,62 @@ func New(db DB.DB, inflogger *log.Logger, errLogger *log.Logger) *App {
 	a.echo.Use(middleware.Logger())
 	a.echo.Use(middleware.Recover())
 
-	a.echo.POST("/user", a.e.Insert)
+	user := a.echo.Group("/user")
 
-	// /user/sort?sort=value
-	a.echo.GET("/user/sort", a.e.Sort)
-	a.echo.DELETE("/user/:id", a.e.Delete)
-	a.echo.PUT("/user/:id", a.e.Update)
+	//  Создание записи
+	//  Пример:
+	//  /user
+	//  body json
+	//  {
+	//      "name":"данные без цифр и пробелов",
+	//      "surname":"данные без цифр и пробелов",
+	//      "patronymic":"не обязательное поле|данные без цифр и пробелов"
+	//  }
 
-	// /user/filter?needField=lt|le|gt|ge|eq|ne value
-	// в данной примере фильтрация возможна по одному полю и без сортировки результата
-	a.echo.GET("/user/filter", a.e.UserFilter)
+	user.POST("", a.e.Insert)
 
-	// /user/?page=value&limit=value
-	a.echo.GET("/user/", a.e.UserPagination)
+	//  Удаление записи
+	//  Пример:
+	//  /user/:id
+	// id-пользователя
+
+	user.DELETE("/:id", a.e.Delete)
+
+	//  Обновление записи
+	//  Пример:
+	//  /user/:id
+	//  id-пользователя
+	//  body json
+	//  {
+	//      "name": "данные без цифр и пробелов", - обязательные поля
+	//      "surname": "данные без цифр и пробелов", - обязательные поля
+	//      "patronymic": "данные без цифр и пробелов", - не обязательное поле
+	//      "age":  "данные без букв и пробелов", - не обязательное поле
+	//      "Gender":  "данные без цифр и пробелов", - не обязательное поле
+	//      "Nationality":  "данные без цифр и пробелов", - не обязательное поле
+	//  }
+
+	user.PUT("/:id", a.e.Update)
+
+	//  Сортировка по полю от меньшего к большему
+	//  Пример:
+	//  /user/sort?sort=age
+
+	user.GET("/sort", a.e.Sort)
+
+	//  Более гибкая фильтрация данных
+	//  Пример:
+	//  /user/filter?name=eq 'Your value'
+	//  Доступные фильтры: eq-равно|ne-не равно|lt-меньше|le-меньше или равно|gt-больше|ge-больше или равно|
+
+	user.GET("/filter", a.e.UserFilter)
+
+	//  Пагинация данных
+	//  Пример:
+	//  /user/?page=1&limit=3
+	//  page-отображаемая страница|limit-количество данных на странице
+
+	user.GET("/", a.e.UserPagination)
 
 	return &a
 
