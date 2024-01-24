@@ -7,7 +7,7 @@ import (
 	"github.com/hulla-hoop/restapi/internal/modeldb"
 )
 
-func (db *sqlPostgres) Create(user *modeldb.User) error {
+func (db *sqlPostgres) Create(user *modeldb.User) (*int, error) {
 
 	var id int
 	err := db.dB.QueryRow("INSERT INTO users(created_at,updated_at,name,surname,patronymic,age,gender,nationality) "+
@@ -24,14 +24,14 @@ func (db *sqlPostgres) Create(user *modeldb.User) error {
 
 		switch err {
 		case sql.ErrNoRows:
-			return fmt.Errorf("Пользователь добавлен но не удалось записать ID %s", err)
+			return nil, fmt.Errorf("Пользователь добавлен но не удалось записать ID %s", err)
 		default:
-			return fmt.Errorf("Ошибка при создании пользователя %s", err)
+			return nil, fmt.Errorf("Ошибка при создании пользователя %s", err)
 		}
 	}
 
 	fmt.Println("id созданого пользователя", id)
-	return nil
+	return &id, nil
 
 }
 

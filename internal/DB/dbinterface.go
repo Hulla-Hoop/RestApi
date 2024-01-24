@@ -3,7 +3,7 @@ package DB
 import "github.com/hulla-hoop/restapi/internal/modeldb"
 
 type DB interface {
-	Create(user *modeldb.User) error
+	Create(user *modeldb.User) (*int, error)
 	Delete(id int) error
 	InsertAll() ([]modeldb.User, error)
 	Update(user *modeldb.User, id int) error

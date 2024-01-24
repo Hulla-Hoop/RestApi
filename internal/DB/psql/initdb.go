@@ -22,7 +22,7 @@ func InitDb() (*sqlPostgres, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = goose.Up(dB, "db")
+	err = goose.Up(dB, "migrations")
 	if err != nil {
 		return nil,
 			fmt.Errorf("--- Ошибка миграции:%s", err)

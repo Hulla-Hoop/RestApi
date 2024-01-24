@@ -35,17 +35,18 @@ func (e *Endpoint) Insert(c echo.Context) error {
 		e.errLogger.Println(err)
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	user, err := e.service.Encriment(u)
+	err = e.service.Encriment(u)
 	if err != nil {
 		e.errLogger.Println(err)
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	err = e.Db.Create(user)
+	id, err := e.Db.Create(u)
 	if err != nil {
 		e.errLogger.Println(err)
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
+	u.Id = uint(*id)
 	return c.JSON(http.StatusCreated, u)
 }
 

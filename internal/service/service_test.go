@@ -47,9 +47,9 @@ func TestEncrement(t *testing.T) {
 		return x.Name == y.Name && x.Surname == y.Surname && x.Patronymic == y.Patronymic && x.Age == y.Age && x.Gender == y.Gender && x.Nationality == y.Nationality
 	})
 
-	result, err := s.Encriment(&userTest)
+	err := s.Encriment(&userTest)
 
-	if diff := cmp.Diff(userExpected, result, comparer); diff != "" {
+	if diff := cmp.Diff(userExpected, userTest, comparer); diff != "" {
 		t.Errorf(diff, err)
 	}
 

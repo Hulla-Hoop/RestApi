@@ -32,8 +32,9 @@ type Age struct {
 	Age   int    `json:"age"`
 }
 
-func (s *Service) EncrimentAge(uName *string) (int, error) {
+func (s *Service) EncrimentAge(uName *string) (*int, error) {
 	userAge := new(Age)
+
 	url := (fmt.Sprintf(s.cfg.AGEAPI, *uName))
 	r, err := http.Get(url)
 	if err != nil {
@@ -41,7 +42,7 @@ func (s *Service) EncrimentAge(uName *string) (int, error) {
 		time.Sleep(5 * time.Second)
 		age, err := s.EncrimentAge(uName)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
 		return age, nil
 	}
@@ -49,16 +50,16 @@ func (s *Service) EncrimentAge(uName *string) (int, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		s.errLogger.Println(err)
-		return 0, err
+		return nil, err
 	}
 
 	err = json.Unmarshal(body, &userAge)
 	if err != nil {
 		s.errLogger.Println(err)
-		return 0, err
+		return nil, err
 	}
 
-	return userAge.Age, nil
+	return &userAge.Age, nil
 }
 
 type Gender struct {
@@ -67,31 +68,31 @@ type Gender struct {
 	Gender string `json:"gender"`
 }
 
-func (s *Service) EncrimentGender(uName string) (string, error) {
+func (s *Service) EncrimentGender(uName *string) (*string, error) {
 	userGender := Gender{}
-	url := (fmt.Sprintf(s.cfg.GENDERAPI, uName))
+	url := (fmt.Sprintf(s.cfg.GENDERAPI, *uName))
 	r, err := http.Get(url)
 	if err != nil {
 		s.errLogger.Println("Server is not available. Check connection")
 		time.Sleep(5 * time.Second)
 		name, err := s.EncrimentGender(uName)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		return name, nil
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return "", errors.Wrap(err, "Internal server error")
+		return nil, errors.Wrap(err, "Internal server error")
 	}
 
 	err = json.Unmarshal(body, &userGender)
 	if err != nil {
-		return "", errors.Wrap(err, "Internal server error")
+		return nil, errors.Wrap(err, "Internal server error")
 	}
 
-	return userGender.Gender, nil
+	return &userGender.Gender, nil
 }
 
 type Country struct {
@@ -105,9 +106,9 @@ type Natonality struct {
 	Country []Country
 }
 
-func (s *Service) EncrimentCountry(uName string) (string, error) {
+func (s *Service) EncrimentCountry(uName *string) (*string, error) {
 	userNati := Natonality{}
-	url := (fmt.Sprintf(s.cfg.NATIONAPI, uName))
+	url := (fmt.Sprintf(s.cfg.NATIONAPI, *uName))
 	r, err := http.Get(url)
 
 	if err != nil {
@@ -116,7 +117,7 @@ func (s *Service) EncrimentCountry(uName string) (string, error) {
 		time.Sleep(5 * time.Second)
 		name, err := s.EncrimentCountry(uName)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		return name, nil
 	}
@@ -124,16 +125,16 @@ func (s *Service) EncrimentCountry(uName string) (string, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		s.errLogger.Println(err)
-		return "", errors.Wrap(err, "Internal server error")
+		return nil, errors.Wrap(err, "Internal server error")
 	}
 
 	err = json.Unmarshal(body, &userNati)
 	if err != nil {
 		s.errLogger.Println(err)
-		return "", errors.Wrap(err, "Internal server error")
+		return nil, errors.Wrap(err, "Internal server error")
 	}
 
-	return userNati.Country[0].CountryId, nil
+	return &userNati.Country[0].CountryId, nil
 }
 
 func (s *Service) CheckErr(U *modeldb.User) error {
@@ -173,27 +174,29 @@ func (s *Service) CheckErr(U *modeldb.User) error {
 
 }
 
-func (s *Service) Encriment(u *modeldb.User) (*modeldb.User, error) {
+func (s *Service) Encriment(u *modeldb.User) error {
 	err := s.CheckErr(u)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	u.Age, err = s.EncrimentAge(&u.Name)
+	age, err := s.EncrimentAge(&u.Name)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	u.Age = *age
 
-	u.Gender, err = s.EncrimentGender(u.Name)
+	gender, err := s.EncrimentGender(&u.Name)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	u.Gender = *gender
 
-	u.Nationality, err = s.EncrimentCountry(u.Name)
+	nationality, err := s.EncrimentCountry(&u.Name)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
+	u.Nationality = *nationality
 	u.CreatedAt = time.Now()
 	u.UpdatedAt = time.Now()
-	return u, nil
+	return nil
 }
