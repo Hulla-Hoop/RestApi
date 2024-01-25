@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"regexp"
 	"time"
@@ -12,17 +11,18 @@ import (
 	"github.com/hulla-hoop/restapi/internal/config"
 	"github.com/hulla-hoop/restapi/internal/modeldb"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 type Service struct {
-	errLogger *log.Logger
-	cfg       *config.ConfigApi
+	logger *logrus.Logger
+	cfg    *config.ConfigApi
 }
 
-func New(errLogger *log.Logger, cfg *config.ConfigApi) *Service {
+func New(errLogger *logrus.Logger, cfg *config.ConfigApi) *Service {
 	return &Service{
-		errLogger: errLogger,
-		cfg:       cfg,
+		logger: errLogger,
+		cfg:    cfg,
 	}
 }
 
@@ -38,7 +38,7 @@ func (s *Service) EncrimentAge(uName *string) (*int, error) {
 	url := (fmt.Sprintf(s.cfg.AGEAPI, *uName))
 	r, err := http.Get(url)
 	if err != nil {
-		s.errLogger.Println("Server is not available. Check connection", err)
+		s.logger.Error("Server is not available. Check connection", err)
 		time.Sleep(5 * time.Second)
 		age, err := s.EncrimentAge(uName)
 		if err != nil {
@@ -46,16 +46,17 @@ func (s *Service) EncrimentAge(uName *string) (*int, error) {
 		}
 		return age, nil
 	}
+	s.logger.Debug("Полученные данные", r)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		s.errLogger.Println(err)
+		s.logger.Error(err)
 		return nil, err
 	}
 
 	err = json.Unmarshal(body, &userAge)
 	if err != nil {
-		s.errLogger.Println(err)
+		s.logger.Error(err)
 		return nil, err
 	}
 
@@ -73,7 +74,7 @@ func (s *Service) EncrimentGender(uName *string) (*string, error) {
 	url := (fmt.Sprintf(s.cfg.GENDERAPI, *uName))
 	r, err := http.Get(url)
 	if err != nil {
-		s.errLogger.Println("Server is not available. Check connection")
+		s.logger.Error("Server is not available. Check connection")
 		time.Sleep(5 * time.Second)
 		name, err := s.EncrimentGender(uName)
 		if err != nil {
@@ -113,7 +114,7 @@ func (s *Service) EncrimentCountry(uName *string) (*string, error) {
 
 	if err != nil {
 
-		s.errLogger.Println("Server is not available. Check connection")
+		s.logger.Error("Server is not available. Check connection")
 		time.Sleep(5 * time.Second)
 		name, err := s.EncrimentCountry(uName)
 		if err != nil {
@@ -124,13 +125,13 @@ func (s *Service) EncrimentCountry(uName *string) (*string, error) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		s.errLogger.Println(err)
+		s.logger.Error(err)
 		return nil, errors.Wrap(err, "Internal server error")
 	}
 
 	err = json.Unmarshal(body, &userNati)
 	if err != nil {
-		s.errLogger.Println(err)
+		s.logger.Error(err)
 		return nil, errors.Wrap(err, "Internal server error")
 	}
 

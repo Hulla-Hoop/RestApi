@@ -7,13 +7,15 @@ import (
 	"github.com/hulla-hoop/restapi/internal/config"
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
+	"github.com/sirupsen/logrus"
 )
 
 type sqlPostgres struct {
-	dB *sql.DB
+	dB     *sql.DB
+	logger *logrus.Logger
 }
 
-func InitDb() (*sqlPostgres, error) {
+func InitDb(logger *logrus.Logger) (*sqlPostgres, error) {
 	config := config.DbNew()
 
 	dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s port=%s sslmode=%s", config.Host, config.User, config.DBName, config.Password, config.Port, config.SSLMode)
@@ -22,13 +24,15 @@ func InitDb() (*sqlPostgres, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	err = goose.Up(dB, "migrations")
 	if err != nil {
 		return nil,
 			fmt.Errorf("--- Ошибка миграции:%s", err)
 	}
 	return &sqlPostgres{
-		dB: dB,
+		dB:     dB,
+		logger: logger,
 	}, nil
 
 }

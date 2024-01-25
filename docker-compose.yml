@@ -9,3 +9,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=12345678
       - POSTGRES_DB=test
+  sobes-api:
+      build:
+        context: ./
+      ports:
+        - "8080:1234" 

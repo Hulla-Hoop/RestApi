@@ -5,7 +5,6 @@ import "github.com/hulla-hoop/restapi/internal/modeldb"
 type DB interface {
 	Create(user *modeldb.User) (*int, error)
 	Delete(id int) error
-	InsertAll() ([]modeldb.User, error)
 	Update(user *modeldb.User, id int) error
 	InsertPage(page uint, limit int) (modeldb.Users, error)
 	Sort(field string) ([]modeldb.User, error)

@@ -1,36 +1,31 @@
 package app
 
 import (
-	"log"
-
 	"github.com/hulla-hoop/restapi/internal/DB"
 	"github.com/hulla-hoop/restapi/internal/config"
 	"github.com/hulla-hoop/restapi/internal/echoendpoint"
 	"github.com/hulla-hoop/restapi/internal/service"
+	"github.com/sirupsen/logrus"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 type App struct {
-	e         *echoendpoint.Endpoint
-	echo      *echo.Echo
-	DB        DB.DB
-	inflogger *log.Logger
-	errLogger *log.Logger
+	e      *echoendpoint.Endpoint
+	echo   *echo.Echo
+	DB     DB.DB
+	logger *logrus.Logger
 }
 
-func New(db DB.DB, inflogger *log.Logger, errLogger *log.Logger) *App {
+func New(db DB.DB, logger *logrus.Logger) *App {
 	a := App{}
 	cfg := config.NewCfgApi()
-	service := service.New(errLogger, cfg)
+	service := service.New(logger, cfg)
 	a.DB = db
-	a.errLogger = errLogger
-	a.inflogger = inflogger
-	a.e = echoendpoint.New(a.DB, a.inflogger, a.errLogger, service)
+	a.logger = logger
+	a.e = echoendpoint.New(a.DB, logger, service)
 	a.echo = echo.New()
-
-	a.echo.Use(middleware.Logger())
 	a.echo.Use(middleware.Recover())
 
 	user := a.echo.Group("/user")
@@ -94,7 +89,11 @@ func New(db DB.DB, inflogger *log.Logger, errLogger *log.Logger) *App {
 
 }
 
-func (a *App) Start() {
-	a.inflogger.Println("Запуск сервера на localhost:1234")
-	a.echo.Start(":1234")
+func (a *App) Start() error {
+	a.logger.Info("Запуск сервера на localhost:1234")
+	err := a.echo.Start(":1234")
+	if err != nil {
+		return err
+	}
+	return nil
 }

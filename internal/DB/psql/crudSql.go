@@ -11,6 +11,7 @@ import (
 func (db *sqlPostgres) Create(user *modeldb.User) (*int, error) {
 
 	var id int
+	db.logger.Debug("db create полученные данные---", user)
 	err := db.dB.QueryRow("INSERT INTO users(created_at,updated_at,name,surname,patronymic,age,gender,nationality) "+
 		"VALUES ($1,$2,$3,$4,$5,$6,$7,$8) returning id",
 		user.CreatedAt,
@@ -31,7 +32,7 @@ func (db *sqlPostgres) Create(user *modeldb.User) (*int, error) {
 		}
 	}
 
-	fmt.Println("id созданого пользователя", id)
+	db.logger.Info("id созданого пользователя ----", id)
 	return &id, nil
 
 }
@@ -39,6 +40,25 @@ func (db *sqlPostgres) Create(user *modeldb.User) (*int, error) {
 func (db *sqlPostgres) Update(user *modeldb.User, id int) error {
 	var patronymic, gender, nationality, age string
 
+	w, err := db.dB.Query("SELECT EXISTS(SELECT * FROM users WHERE id=$1)", id)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+	for w.Next() {
+		var ok bool
+
+		err := w.Scan(&ok)
+		if err != nil {
+			db.logger.Error(err)
+			continue
+		}
+		db.logger.Debug("Значение OK--", ok)
+		if !ok {
+			return fmt.Errorf("Пользователь с таким ID не существует")
+		}
+	}
+	db.logger.Debug("db update полученные данные---", user, "--id----", id)
 	user.UpdatedAt = time.Now()
 	if user.Patronymic == "" {
 		patronymic = " "
@@ -62,7 +82,7 @@ func (db *sqlPostgres) Update(user *modeldb.User, id int) error {
 	}
 
 	update := fmt.Sprintf("UPDATE users SET updated_at=$1,name=$2, %s %s %s %s surname=$3  WHERE id=$4 ", patronymic, age, gender, nationality)
-	_, err := db.dB.Exec(
+	_, err = db.dB.Exec(
 		update,
 		user.UpdatedAt,
 		user.Name,
@@ -75,6 +95,7 @@ func (db *sqlPostgres) Update(user *modeldb.User, id int) error {
 }
 
 func (db *sqlPostgres) Delete(id int) error {
+	db.logger.Debug("db delete полученные данные---", id)
 	result, err := db.dB.Exec(
 		"DELETE "+
 			"FROM users "+
@@ -83,36 +104,12 @@ func (db *sqlPostgres) Delete(id int) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(result.RowsAffected())
+	db.logger.Info("Пользователь успешно удален ", result)
 	return nil
 }
 
-func (db *sqlPostgres) InsertAll() ([]modeldb.User, error) {
-	rows, err := db.dB.Query(
-		"SELECT id,name,surname,patronymic,age,gender,nationality " +
-			"FROM users ")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	user := []modeldb.User{}
-
-	for rows.Next() {
-		u := modeldb.User{}
-
-		err := rows.Scan(&u.Id, &u.Name, &u.Surname, &u.Patronymic, &u.Age, &u.Gender, &u.Nationality)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		user = append(user, u)
-	}
-
-	return user, nil
-}
-
 func (db *sqlPostgres) InsertPage(page uint, limit int) (modeldb.Users, error) {
+	db.logger.Debug("db insert page полученные данные---", page, limit)
 
 	cashPage := page*uint(limit) - 1
 
@@ -135,18 +132,18 @@ func (db *sqlPostgres) InsertPage(page uint, limit int) (modeldb.Users, error) {
 
 		err := rows.Scan(&u.Id, &u.Name, &u.Surname, &u.Patronymic, &u.Age, &u.Gender, &u.Nationality)
 		if err != nil {
-			fmt.Println(err)
+			db.logger.Error(err)
 			continue
 		}
 		cashPage = u.Id
 		user = append(user, u)
 	}
-
+	db.logger.Debug("данные на выходе db insert page ", user)
 	return user, nil
 }
 
 func (db *sqlPostgres) Sort(field string) ([]modeldb.User, error) {
-
+	db.logger.Debug("db sort полученные данные---", field)
 	query := "SELECT id,name,surname,patronymic,age,gender,nationality " +
 		"FROM users " +
 		"ORDER BY %s"
@@ -167,7 +164,7 @@ func (db *sqlPostgres) Sort(field string) ([]modeldb.User, error) {
 
 		err := rows.Scan(&u.Id, &u.Name, &u.Surname, &u.Patronymic, &u.Age, &u.Gender, &u.Nationality)
 		if err != nil {
-			fmt.Println(err)
+			db.logger.Error(err)
 			continue
 		}
 		user = append(user, u)
@@ -177,7 +174,7 @@ func (db *sqlPostgres) Sort(field string) ([]modeldb.User, error) {
 }
 
 func (db *sqlPostgres) Filter(field string, operator string, value string) ([]modeldb.User, error) {
-
+	db.logger.Debug("db filter полученные данные---", field, "---", operator, "---", value)
 	query := "SELECT id,name,surname,patronymic,age,gender,nationality " +
 		"FROM users " +
 		"WHERE %s %s %s "
@@ -207,7 +204,7 @@ func (db *sqlPostgres) Filter(field string, operator string, value string) ([]mo
 
 		err := rows.Scan(&u.Id, &u.Name, &u.Surname, &u.Patronymic, &u.Age, &u.Gender, &u.Nationality)
 		if err != nil {
-			fmt.Println(err)
+			db.logger.Error(err)
 			continue
 		}
 		user = append(user, u)

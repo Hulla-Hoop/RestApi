@@ -1,7 +1,6 @@
 package service_test
 
 import (
-	"log"
 	"os"
 	"testing"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/hulla-hoop/restapi/internal/modeldb"
 	"github.com/hulla-hoop/restapi/internal/service"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 var s *service.Service
@@ -18,7 +18,7 @@ func TestMain(m *testing.M) {
 	os.Setenv("AGEAPI", "https://api.agify.io/?name=%s")
 	os.Setenv("NATIONAPI", "https://api.nationalize.io/?name=%s")
 	os.Setenv("GENDERAPI", "https://api.genderize.io/?name=%s")
-	e := log.New(os.Stdout, "ERROR:  ", log.Ldate|log.Lshortfile)
+	e := logrus.New()
 	cfgT := config.NewCfgApi()
 	s = service.New(e, cfgT)
 	exitVal := m.Run()
