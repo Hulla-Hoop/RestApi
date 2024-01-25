@@ -95,6 +95,26 @@ func (db *sqlPostgres) Update(user *modeldb.User, id int) error {
 }
 
 func (db *sqlPostgres) Delete(id int) error {
+
+	w, err := db.dB.Query("SELECT EXISTS(SELECT * FROM users WHERE id=$1)", id)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+	for w.Next() {
+		var ok bool
+
+		err := w.Scan(&ok)
+		if err != nil {
+			db.logger.Error(err)
+			continue
+		}
+		db.logger.Debug("Значение OK--", ok)
+		if !ok {
+			return fmt.Errorf("Пользователь с таким ID не существует")
+		}
+	}
+
 	db.logger.Debug("db delete полученные данные---", id)
 	result, err := db.dB.Exec(
 		"DELETE "+

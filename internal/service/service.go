@@ -46,17 +46,14 @@ func (s *Service) EncrimentAge(uName *string) (*int, error) {
 		}
 		return age, nil
 	}
-	s.logger.Debug("Полученные данные", r)
-
+	s.logger.Debug("ответ сервера AGEAPI---", r.Status)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		s.logger.Error(err)
 		return nil, err
 	}
 
 	err = json.Unmarshal(body, &userAge)
 	if err != nil {
-		s.logger.Error(err)
 		return nil, err
 	}
 
@@ -82,7 +79,7 @@ func (s *Service) EncrimentGender(uName *string) (*string, error) {
 		}
 		return name, nil
 	}
-
+	s.logger.Debug("ответ сервера GENDERAPI---", r.Status)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "Internal server error")
@@ -122,16 +119,17 @@ func (s *Service) EncrimentCountry(uName *string) (*string, error) {
 		}
 		return name, nil
 	}
+	s.logger.Debug("ответ сервера NATIONAPI---", r.Status)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		s.logger.Error(err)
+
 		return nil, errors.Wrap(err, "Internal server error")
 	}
 
 	err = json.Unmarshal(body, &userNati)
 	if err != nil {
-		s.logger.Error(err)
+
 		return nil, errors.Wrap(err, "Internal server error")
 	}
 

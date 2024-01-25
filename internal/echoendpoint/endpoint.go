@@ -60,7 +60,7 @@ func (e *Endpoint) Delete(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	e.logger.Info("Пользователь удален")
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusAccepted, "Пользователь удален")
 }
 
 func (e *Endpoint) Update(c echo.Context) error {
