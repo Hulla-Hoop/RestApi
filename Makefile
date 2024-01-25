@@ -7,7 +7,7 @@ run-local:
 	@time sleep 5
 	@go run ./cmd/app
 
-#Команда для запуска сервиса в докер образе
+#Команда для запуска сервиса в докер образе|в докер образе более старая версия
 run-docker:
 	@docker-compose up -d postgres
 	@time sleep 5
